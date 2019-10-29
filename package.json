@@ -1,0 +1,32 @@
+{
+  "name": "verdaccio-mysql",
+  "version": "0.1.0",
+  "description": "Verdaccio MySQL authentication plugin",
+  "main": "lib/index.js",
+  "dependencies": {
+    "mysql": "^2.17.1"
+  },
+  "devDependencies": {
+    "@types/mysql": "^2.15.7",
+    "@verdaccio/types": "git+https://github.com/verdaccio/flow-types.git"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "prepare": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bchanudet/verdaccio-mysql.git"
+  },
+  "keywords": [
+    "verdaccio",
+    "mysql"
+  ],
+  "author": "Benjamin Chanudet",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bchanudet/verdaccio-mysql/issues"
+  },
+  "homepage": "https://github.com/bchanudet/verdaccio-mysql#readme"
+}

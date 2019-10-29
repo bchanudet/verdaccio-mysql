@@ -1,2 +1,2 @@
 # verdaccio-mysql
-Verdaccio MySQL plugin authentication
+Verdaccio MySQL authentication plugin 
