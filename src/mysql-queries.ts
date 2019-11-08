@@ -4,12 +4,21 @@ export interface IMysqlQueries{
     readonly update_user: string;
     readonly auth_user: string;
     readonly init_database: string[];
+    readonly skip_init: boolean;
 }
 
 export class MysqlQueries implements IMysqlQueries{
 
     constructor(private custom : IMysqlQueries){
 
+    }
+
+    public get skip_init() : boolean{
+        if(this.custom.skip_init !== undefined){
+            return this.custom.skip_init;
+        }
+
+        return false;
     }
 
     public get add_user() : string{

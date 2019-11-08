@@ -13,12 +13,28 @@ export default class MysqlAuth  implements IPluginAuth<MysqlAuthConfig> {
     private queries : IMysqlQueries;
 
     private logger: Logger;
+    private connOK: boolean;
     
     constructor(configuration : MysqlAuthConfig, stuff: { logger: Logger}){
 
         this.config = configuration.connection;
         this.queries = new MysqlQueries(configuration.customQueries);
         this.logger = stuff.logger;
+        
+        this.connOK = false;
+
+        // Calling initialization at the constructor check connection to the database.
+        // It will also create the default tables if not overriden.
+        this.test()
+            .then((success : boolean) => {
+                if(success) {
+                    this.connOK = true;
+                    this.initialize();
+                }
+            })
+            .catch((reason) => {
+                this.connOK = false;
+            });
     }
 
 
@@ -64,5 +80,40 @@ export default class MysqlAuth  implements IPluginAuth<MysqlAuthConfig> {
         });
     }
 
+    private async test() : Promise<boolean> {
+        return new Promise<boolean>((resolve, reject) => {
+            const connection = mysql.createConnection(this.config);
 
+            connection.query('SELECT 1', (err, res) => {
+                if(err){
+                    this.logger.error('MySQL - Test connection did not work');
+                    this.logger.error('MySQL - Error: '+ err.message);
+                    reject();
+                }
+                connection.destroy();
+                resolve();
+                return;
+            })
+        });
+    }
+
+    private async initialize() : Promise<boolean> {
+        return new Promise<boolean>(async (resolve, reject) => {
+            const connection = mysql.createConnection(this.config);
+            let queries : string[] = this.queries.init_database;
+            
+            for(let i = 0, l = queries.length; i < l; i+= 1){
+                connection.query(queries[i], (error, result)=> {
+                    if(error){
+                        this.logger.error('MySQL - Error during initialization');
+                        this.logger.error('MySQL - '+ error.message);
+                        connection.end();
+                        reject();
+                        return;
+                    }
+                });
+            }
+            resolve();
+        });
+    }
 }
