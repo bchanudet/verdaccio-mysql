@@ -1,0 +1,13 @@
+# Look for the `auth` section in the configuration file of Verdaccio
+# auth:
+  mysql:
+    connection:
+      host: localhost
+      port: 3306
+      user: root
+      password: root
+      database: verdaccio
+	  queries:
+      add_user: "INSERT INTO `users`(`username`,`password`) VALUES (?,PASSWORD(?));"
+      update_user: "UPDATE `users` SET `password`= PASSWORD(?) WHERE `username`=? AND `password`=PASSWORD(?);"
+      auth_user: "SELECT u.`username`, GROUP_CONCAT(g.`name`) AS usergroups FROM `users` u LEFT JOIN `user_group` ug ON ug.`username` = u.`username` LEFT JOIN `groups` g ON ug.`group` = g.`name` WHERE u.`username` = ? AND u.`password` = PASSWORD(?)"
