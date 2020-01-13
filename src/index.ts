@@ -1,10 +1,15 @@
 import { Callback, Logger, IPluginAuth } from '@verdaccio/types';
 import * as mysql from 'mysql';
-import { IMysqlQueries, MysqlQueries } from './mysql-queries';
 
 interface MysqlAuthConfig {
     connection : mysql.ConnectionConfig;
-    customQueries : IMysqlQueries;
+    queries : IMysqlQueries;
+}
+
+interface IMysqlQueries{
+    readonly add_user: string;
+    readonly update_user: string;
+    readonly auth_user: string;
 }
 
 export default class MysqlAuth  implements IPluginAuth<MysqlAuthConfig> {
@@ -18,18 +23,16 @@ export default class MysqlAuth  implements IPluginAuth<MysqlAuthConfig> {
     constructor(configuration : MysqlAuthConfig, stuff: { logger: Logger}){
 
         this.config = configuration.connection;
-        this.queries = new MysqlQueries(configuration.customQueries);
+        this.queries = new MysqlQueries(configuration.queries);
         this.logger = stuff.logger;
         
         this.connOK = false;
 
         // Calling initialization at the constructor check connection to the database.
-        // It will also create the default tables if not overriden.
         this.test()
             .then((success : boolean) => {
                 if(success) {
                     this.connOK = true;
-                    this.initialize();
                 }
             })
             .catch((reason) => {
@@ -37,12 +40,11 @@ export default class MysqlAuth  implements IPluginAuth<MysqlAuthConfig> {
             });
     }
 
-
     authenticate(user: string, password: string, cb: Callback){
         const connection = mysql.createConnection(this.config);
 
         if(this.queries.auth_user.length == 0){
-            this.logger.info('MySQL - Can\'t authenticate : authenticate query is empty');
+            this.logger.info('MySQL - Can\'t authenticate: authenticate query is empty');
             cb(null, false)
             return;
         }
@@ -63,13 +65,34 @@ export default class MysqlAuth  implements IPluginAuth<MysqlAuthConfig> {
         const connection = mysql.createConnection(this.config);
 
         if(this.queries.add_user.length == 0){
-            this.logger.info('MySQL - Can\'t add user : add_user query is empty');
+            this.logger.info('MySQL - Can\'t add user: add_user query is empty');
             cb(null, false)
             return;
         }
 
         connection.query(this.queries.add_user,[user, password], (error, result) => {
-            if(error || result.length !== 1 || result[0].usergroups === null){
+            if(error){
+                cb(null, false);
+            }
+            else { 
+                cb(null, result[0].usergroups.split(','));
+            }
+
+            connection.end();
+        });
+    }
+
+    changePassword(user: string, password: string, newPassword: string, cb: Callback){
+        const connection = mysql.createConnection(this.config);
+
+        if(this.queries.update_user.length == 0){
+            this.logger.info('MySQL - Can\'t change password: update_user query is empty');
+            cb(null, false)
+            return;
+        }
+
+        connection.query(this.queries.update_user,[newPassword, user, password], (error, result) => {
+            if(error){
                 cb(null, false);
             }
             else { 
@@ -96,24 +119,34 @@ export default class MysqlAuth  implements IPluginAuth<MysqlAuthConfig> {
             })
         });
     }
+}
 
-    private async initialize() : Promise<boolean> {
-        return new Promise<boolean>(async (resolve, reject) => {
-            const connection = mysql.createConnection(this.config);
-            let queries : string[] = this.queries.init_database;
-            
-            for(let i = 0, l = queries.length; i < l; i+= 1){
-                connection.query(queries[i], (error, result)=> {
-                    if(error){
-                        this.logger.error('MySQL - Error during initialization');
-                        this.logger.error('MySQL - '+ error.message);
-                        connection.end();
-                        reject();
-                        return;
-                    }
-                });
-            }
-            resolve();
-        });
+
+class MysqlQueries implements IMysqlQueries{
+
+    constructor(private custom : IMysqlQueries){
+
+    }
+
+    public get add_user() : string{
+        if(this.custom.add_user !== undefined){
+            return this.custom.add_user;
+        }
+
+        return '';
+    }
+
+    public get update_user() : string{
+        if(this.custom.update_user !== undefined){
+            return this.custom.update_user;
+        }
+        return '';
+    }
+
+    public get auth_user(): string{
+        if(this.custom.auth_user !== undefined){
+            return this.custom.auth_user;
+        }
+        return '';
     }
 }
