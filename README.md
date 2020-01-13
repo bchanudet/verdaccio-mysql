@@ -8,6 +8,8 @@ This plugin allows you to use a MySQL database as the store for your user data. 
 
     > npm install -g verdaccio-mysql
 
+Current release version is v1.0.0
+
 ### 2. Add the plugin in your Verdaccio configuration
 
 In your `config.yaml` file, look for the `auth` section. Add the following part right after, replacing the string `YOUR_[...]` with your values.
