@@ -8,10 +8,11 @@
   },
   "devDependencies": {
     "@types/mysql": "^2.15.7",
-    "@verdaccio/types": "git+https://github.com/verdaccio/flow-types.git"
+    "@verdaccio/types": "git+https://github.com/verdaccio/flow-types.git",
+    "typescript": "^4.2.4"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "npx tsc",
     "prepare": "npm run build"
   },
   "repository": {
